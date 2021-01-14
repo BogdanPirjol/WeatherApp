@@ -35,9 +35,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class LocationController {
-    private ObservableList<Locations> locationData;
-    private ObservableList<String> countries= FXCollections.observableArrayList();
-    private ObservableList<String> cities = FXCollections.observableArrayList();
+    public static ObservableList<Locations> locationData;
+    private static ObservableList<String> countries= FXCollections.observableArrayList();
+    private static ObservableList<String> cities = FXCollections.observableArrayList();
 
     String cityValue;
 
@@ -77,7 +77,7 @@ public class LocationController {
         setCountryName();
     }
 
-    public void setCountryName()
+    public static void setCountryName()
     {
         locationData.forEach((location) ->{
             String countryCode=location.countryCodeProperty().get();
@@ -136,16 +136,20 @@ public class LocationController {
     });
     }
 
-    public void getCities(String country)
+    public static ObservableList<String> getCities(String country)
     {
         if(cities.isEmpty()==false)
             cities.clear();
+        ObservableList<String> localCities = FXCollections.observableArrayList();
+        if(country == null)
+            return null;
         locationData.forEach(location -> {
             if(location.getCountryName().equalsIgnoreCase(country))
             {
-                cities.add(location.getCityName());
+                localCities.add(location.getCityName());
             }
         });
+        return localCities;
     }
 
     public void updateHistoryRecord(String id, String cityName, String lat, String lon, String countryCode)
@@ -178,6 +182,27 @@ public class LocationController {
         }
     }
 
+    public static String getTempAsString(Float temperature)
+    {
+        Integer temp = temperature.intValue();
+        String stringTemperature = temp.toString();
+        return stringTemperature + " \u00B0" + "C";
+    }
+
+    public String getWindSpeedAsString(Float windSpeed)
+    {
+        Integer integerWindSpeed = windSpeed.intValue();
+        String windSpeedAsString = integerWindSpeed.toString();
+        return windSpeedAsString + " m/s";
+    }
+
+    public String getHumidityAsString(Float humidity)
+    {
+        Integer integerHumidity = humidity.intValue();
+        String humidityAsString = integerHumidity.toString();
+        return humidityAsString + "%";
+    }
+
 
     public void getWeatherInfo(String cityName) throws IOException {
         String urlString= "http://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&units=metric&appid=f2b674b2e5c3f8c80fa2d9446dbbea18";
@@ -188,15 +213,15 @@ public class LocationController {
         String content=reader.readLine();
         JsonObject obj= Json.parse(content).asObject().get("main").asObject();
         Float temp = obj.get("temp").asFloat();
-        Integer humidity = obj.get("humidity").asInt();
+        Float humidity = obj.get("humidity").asFloat();
         JsonObject wObj = Json.parse(content).asObject().get("wind").asObject();
         Float windSpeed = wObj.get("speed").asFloat();
 
-        rainValue.setText(humidity.toString() + "%");
+        rainValue.setText(getHumidityAsString(humidity));
         rainValue.setVisible(true);
-        tempValue.setText(temp.toString() +" degrees");
+        tempValue.setText(getTempAsString(temp));
         tempValue.setVisible(true);
-        windValue.setText(windSpeed.toString() +" m/s");
+        windValue.setText(getWindSpeedAsString(windSpeed));
         windValue.setVisible(true);
         locationData.forEach((location) -> {
             String cityN = location.getCityName();
@@ -222,7 +247,7 @@ public class LocationController {
                     public void changed(ObservableValue<? extends String> observable,
                                         String oldValue, String newValue) {
                         cityBox.setDisable(false);
-                        getCities(newValue);
+                        cities=getCities(newValue);
                         searchButton.setDisable(true);
                         cityBox.setValue("Choose a city");
                         tempValue.setVisible(false);
@@ -249,7 +274,6 @@ public class LocationController {
             public void handle(ActionEvent actionEvent) {
                 try {
                     getWeatherInfo(cityValue);
-
                 }
                 catch(IOException e)
                 {
