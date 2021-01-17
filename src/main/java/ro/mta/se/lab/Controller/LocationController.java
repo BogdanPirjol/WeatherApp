@@ -38,8 +38,9 @@ public class LocationController {
     public static ObservableList<Locations> locationData;
     private static ObservableList<String> countries= FXCollections.observableArrayList();
     private static ObservableList<String> cities = FXCollections.observableArrayList();
+    private LocationLogger logger;
 
-    String cityValue;
+    private String cityValue;
 
     @FXML
     private HBox chooseMenu;
@@ -152,34 +153,28 @@ public class LocationController {
         return localCities;
     }
 
-    public void updateHistoryRecord(String id, String cityName, String lat, String lon, String countryCode)
+    public String indentMessageForLogging(String locationID, String cityName, String locationLatitude,
+                                          String locationLongitude, String countryCode)
     {
-        try{
-            FileWriter writer= new FileWriter("HistoryRecords.txt", true);
-            String toWrite = "\n" + id;
-            if(id.length() < 8)
-                toWrite += "\t\t"+ cityName;
-            else
-                toWrite +="\t" + cityName;
-            if(cityName.length() < 8)
-                toWrite += "\t\t" + lat;
-            else
-                toWrite += "\t" + lat;
-            if(lat.length() <8)
-                toWrite += "\t\t" + lon;
-            else
-                toWrite += "\t" + lon;
-            if(lon.length() <8)
-                toWrite += "\t\t" +countryCode;
-            else
-                toWrite += "\t" + countryCode;
-            writer.write(toWrite);
-            writer.close();
-        }
-        catch(IOException e)
-        {
-            e.printStackTrace();
-        }
+        String messageToLog="\n" + locationID;
+        if(locationID.length() < 8)
+            messageToLog += "\t\t" + cityName;
+        else
+            messageToLog += "\t" + cityName;
+        if(cityName.length() < 8)
+            messageToLog += "\t\t" + locationLatitude;
+        else
+            messageToLog += "\t" + locationLatitude;
+        if(locationLatitude.length() < 8)
+            messageToLog += "\t\t" + locationLongitude;
+        else
+            messageToLog += "\t" +locationLongitude;
+        if(locationLongitude.length() < 8)
+            messageToLog += "\t\t" + countryCode;
+        else
+            messageToLog += "\t" + countryCode;
+
+        return messageToLog;
     }
 
     public static String getTempAsString(Float temperature)
@@ -227,14 +222,19 @@ public class LocationController {
             String cityN = location.getCityName();
             if(cityN.equalsIgnoreCase(cityName))
             {
-                updateHistoryRecord(location.getLocationID(), location.getCityName(), location.getLatitude(),
+                String messageForLogging = indentMessageForLogging(location.getLocationID(), location.getCityName(), location.getLatitude(),
                         location.getLongitude(), location.getCountryCode());
+                logger.setMessageForLog(messageForLogging);
+                String loggedMessage = LocationLogger.updateHistoryRecord();
+                System.out.println(loggedMessage);
             }
         });
     }
 
     public void initialize()
     {
+        if(this.logger == null)
+            logger = new LocationLogger();
         tempValue.setVisible(false);
         rainValue.setVisible(false);
         windValue.setVisible(false);
@@ -246,6 +246,8 @@ public class LocationController {
                 .addListener(new ChangeListener<String>() {
                     public void changed(ObservableValue<? extends String> observable,
                                         String oldValue, String newValue) {
+                        if(newValue == null)
+                            return;
                         cityBox.setDisable(false);
                         cities=getCities(newValue);
                         searchButton.setDisable(true);
@@ -262,6 +264,8 @@ public class LocationController {
                     public void changed(ObservableValue<? extends String> observable,
                                         String oldValue, String newValue) {
                         cityBox.setItems(cities);
+                        if(newValue == null)
+                            return;
                         cityValue = new String(newValue);
                         if(!cityValue.equalsIgnoreCase("Choose a city"))
                         {
@@ -273,7 +277,7 @@ public class LocationController {
             @Override
             public void handle(ActionEvent actionEvent) {
                 try {
-                    getWeatherInfo(cityValue);
+                        getWeatherInfo(cityValue);
                 }
                 catch(IOException e)
                 {

@@ -20,7 +20,7 @@ public class Locations {
         this.countryCode= new SimpleStringProperty(countryCode);
     }
 
-    public StringProperty locationIDProperty()
+   /* public StringProperty locationIDProperty()
     {
         return this.locationID;
     }
@@ -38,7 +38,7 @@ public class Locations {
     public StringProperty longitudeProperty()
     {
         return this.longitude;
-    }
+    }*/
 
     public StringProperty countryCodeProperty()
     {

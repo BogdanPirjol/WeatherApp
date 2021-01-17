@@ -51,4 +51,5 @@ public class LocationControllerTest {
         assertEquals(cities, LocationController.getCities("Romania"));
         assertEquals(null, LocationController.getCities(null));
     }
+
 }
